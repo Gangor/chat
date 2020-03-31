@@ -1,7 +1,7 @@
-CC = gcc
+CC = c++
 BINARY=chat.bin
 CFLAGS = -pthread
-SRC = chat.c chat.h
+SRC = chat.cpp
 
 build: clean
 	$(CC) $(SRC) -o $(BINARY) $(CFLAGS)
