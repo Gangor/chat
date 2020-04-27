@@ -5,17 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "g++ - Générer et déboguer le fichier actif",
+            "name": "gcc - Générer et déboguer",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${fileDirname}/${fileBasenameNoExtension}",
+            "program": "${workspaceRoot}/bin/${workspaceFolderBasename}",
             "args": [
-                "1235"
+                "1234"
             ],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceRoot}",
             "environment": [],
-            "externalConsole": false,
+            "externalConsole": true,
             "MIMode": "gdb",
             "setupCommands": [
                 {
@@ -24,7 +24,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "g++ build active file",
+            "preLaunchTask": "gcc build",
             "miDebuggerPath": "/usr/bin/gdb"
         }
     ]

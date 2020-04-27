@@ -1,16 +1,34 @@
-CC = c++
-BINARY=chat.bin
-CFLAGS = -pthread
-SRC = chat.cpp
+CC 		:= gcc
+CFLAGS 	:= -pthread
 
-build: clean
-	$(CC) $(SRC) -o $(BINARY) $(CFLAGS)
+BIN     := bin
+INCLUDE	:= include
+SRC 	:= src
+
+LIBRARIES   :=
+EXECUTABLE  := chat
+
+all: build
+
+build: $(SRC)/*.c
+	clear
+	$(CC) $(CFLAGS) -I $(INCLUDE) $^ -o $(BIN)/$(EXECUTABLE)
 
 clean:
-	rm -rf $(BINARY)
+	> ${EXECUTABLE}_log
 
 kill:
-	kill -9 $$(ps -ef | grep -v grep | grep $(BINARY) | awk -F ' ' '{print $$2}')
+	kill -9 $$(ps -ef | grep -v grep | grep $(EXECUTABLE) | awk -F ' ' '{print $$2}')
 
 run: build
-	./$(BINARY) 16450
+	./$(BIN)/$(EXECUTABLE) 1234
+
+memcheck: build
+	valgrind ./$(BIN)/$(EXECUTABLE) 1234 --leak-check=full
+
+client:
+	clear
+	telnet 127.0.0.1 1234
+
+watch:
+	tail -f ./$(EXECUTABLE)_log

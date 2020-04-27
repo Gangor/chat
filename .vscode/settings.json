@@ -1,0 +1,8 @@
+{
+    "files.useExperimentalFileWatcher": true,
+    "files.associations": {
+        "server.h": "c",
+        "client.h": "c",
+        "functional": "c"
+    }
+}

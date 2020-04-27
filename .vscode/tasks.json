@@ -2,17 +2,23 @@
     "tasks": [
         {
             "type": "shell",
-            "label": "g++ build active file",
-            "command": "/usr/bin/g++",
+            "label": "gcc build",
+            "command": "gcc",
+            "options": {
+                "cwd": "${workspaceRoot}"
+            },
             "args": [
                 "-pthread",
+                "-Iinclude",
                 "-g",
-                "${file}",
+                "src/*.c",
                 "-o",
-                "${fileDirname}/${fileBasenameNoExtension}"
+                "${workspaceRoot}/bin/${workspaceFolderBasename}"
             ],
-            "options": {
-                "cwd": "/usr/bin"
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
             }
         }
     ],
