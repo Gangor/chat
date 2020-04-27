@@ -4,6 +4,7 @@ int endSignal = 0;
 
 void signal_callback_handler( int signum )
 {
+	LOG( "SIG %i", signum );
 	endSignal = 1;
 }
 
@@ -23,6 +24,8 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
+	#ifndef DEBUG
+
     pid_t pid = fork();
 
     if( pid < 0 )
@@ -33,6 +36,8 @@ int main(int argc, char *argv[])
 
     if( setsid() < 0 )
         exit( EXIT_FAILURE );
+	
+	#endif
 
 	signal( SIGINT, signal_callback_handler );
 	signal( SIGTERM, signal_callback_handler );
@@ -40,7 +45,10 @@ int main(int argc, char *argv[])
 	pthread_t mainThread;
 
 	pthread_create( &mainThread, NULL, mainProcess, NULL);
+	pthread_detach( mainThread );
+
 	while( !endSignal );
+	
 	pthread_cancel( mainThread );
 
 	stop();

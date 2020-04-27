@@ -7,12 +7,13 @@ SRC 	:= src
 
 LIBRARIES   :=
 EXECUTABLE  := chat
+PROFILE		:= RELEASE
 
-all: build
+all: build RELEASE
 
 build: $(SRC)/*.c
 	clear
-	$(CC) $(CFLAGS) -I $(INCLUDE) $^ -o $(BIN)/$(EXECUTABLE)
+	$(CC) $(CFLAGS) -I $(INCLUDE) $^ -o $(BIN)/$(EXECUTABLE) -D ${PROFILE}
 
 clean:
 	> ${EXECUTABLE}_log
@@ -23,8 +24,8 @@ kill:
 run: build
 	./$(BIN)/$(EXECUTABLE) 1234
 
-memcheck: build
-	valgrind ./$(BIN)/$(EXECUTABLE) 1234 --leak-check=full
+memcheck: $(eval PROFILE = DEBUG) build
+	valgrind --trace-children=yes ./$(BIN)/$(EXECUTABLE) 1234
 
 client:
 	clear

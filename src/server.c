@@ -7,9 +7,9 @@ client_t* addClient( int fd )
 
 	for( int i = 0; i < MAX_CLIENT; i++ )
 	{
-		client_t* client = &clients[i];
+		client_t* client = &( clients[i] );
 
-		if ( client->fd == UNUSED )
+		if( client->fd == UNUSED )
 		{
 			client_init( client, fd );
 			return client;
@@ -20,33 +20,26 @@ client_t* addClient( int fd )
 
 void* clientProcess( void* ptr )
 {
-	char buffer[ BUFFER ];
+	char buffer[256];
 	client_t * client = (client_t *)ptr;
 
-	MESSAGE( client->fd, "Bienvenue sur le chat EPSI v1.\n" );
-	MESSAGE( client->fd, "Consulter l'aide en tapant /help.\n" );
-	MESSAGE( client->fd, "Veuillez saisir votre pseudo : " );
+	MESSAGE( client, "Bienvenue sur le chat EPSI v1.\n" );
+	MESSAGE( client, "Consulter l'aide en tapant /help.\n" );
+	MESSAGE( client, "Veuillez saisir votre pseudo : " );
 
-	readLine( client->fd, buffer );
+	readLine( client, buffer );
 	client_pseudo( client, buffer );
 	
 	BROADCAST( "%s vient de se joindre à la discussion.\n", client->pseudo );
 
 	while( 1 )
 	{
-		if( readLine( client->fd, buffer ) == EXIT_FAILURE )
+		if( readLine( client, buffer ) != 0 )
 			break;
 
-		// deletion of the draft line
-		MESSAGE( client->fd, "\033[F" );
-		MESSAGE( client->fd, "\033[K" );
-
-		// reset color
-		MESSAGE( client->fd, "\033[0m" );
-
-		if( strcmp( buffer, "^]" ) == 0 ||
-			strcmp( buffer, "^C" ) == 0 )
-			break;
+		// prompt cursor
+		MESSAGE( client, "\033[F" );
+		MESSAGE( client, "\033[K" );
 
 		if( proc_command( client, buffer ) == 0 )
 			continue;
@@ -66,11 +59,13 @@ client_t* findClient( const char* pseudo )
 {
 	for( int i = 0; i < MAX_CLIENT; i++ )
 	{
-		if( clients[i].pseudo == NULL )
+		client_t* client = &( clients[i] );
+
+		if( client->pseudo == NULL )
 			continue;
 
-		if( strcasecmp( clients[i].pseudo, pseudo ) == 0 )
-			return &( clients[i] );
+		if( stricmp( client->pseudo, pseudo ) == 0 )
+			return client;
 	}
 
 	return NULL;
@@ -123,20 +118,30 @@ void* mainProcess( void* ptr )
 		int fd 				= accept( sock, (struct sockaddr *)&server, (socklen_t*)&addrlen );        
 		client_t* client    = addClient( fd );
 
-		if( client != NULL )
+		if( client == NULL )
 		{
-			if( pthread_create( &client->thread, NULL, clientProcess, (void *)client ) != 0 )
-			{
-				close( fd );
-				ERROR( "Echec de la création du thread client pour la connexion entrante." );
-			}
+			char err[] = "Plus de place disponible.";
+			
+			send( fd, err, strlen( err ), 0 );
+			close( fd );
+			continue;
+		}
+
+		if( pthread_create( &client->thread, NULL, clientProcess, (void *)client ) != 0 )
+		{
+			ERROR( "Echec de la création du thread client." );
+			close( fd );
+		}
+		else
+		{
+			pthread_detach( client->thread );
 		}
 	}
 }
 
-void message( int fd, const char* format, ... )
+void message( client_t* client, const char* format, ... )
 {
-	if( fd < 0 )
+	if( client->fd < 0 )
 		return;
 
 	va_list arglist;
@@ -144,27 +149,32 @@ void message( int fd, const char* format, ... )
 	va_start( arglist, format );
 
 	int len = snprintf( NULL, 0, format, arglist ) + 1;
-	char str[len];
+	char* str = calloc( len, sizeof( char ) );
 
 	vsprintf( str, format, arglist );
 
 	va_end( arglist );
 
-	send( fd, str, strlen( str ), 0 );
+	send( client->fd, str, strlen( str ), 0 );
+
+	free( str );
 }
 
-int readLine( int fd, char* buffer )
+int readLine( client_t* client, char* buffer )
 {
 	bzero( buffer, BUFFER );
 
-	int len = read( fd, buffer, BUFFER );
+	int len = read( client->fd, buffer, BUFFER );
 	if( len <= 0 )
+		return EXIT_FAILURE;
+
+	if( *buffer == EOF )
 		return EXIT_FAILURE;
 
 	buffer[len] = '\0';
 
 	char *pos;
-	if(( pos = strchr( buffer, '\r' )) != NULL)
+	if(( pos = strchr( buffer, '\r' )) != NULL )
 		*pos = '\0';
 
 	return EXIT_SUCCESS;
@@ -177,16 +187,18 @@ int stop()
 	
 	for( int i = 0; i < MAX_CLIENT; i++ )
 	{
-		client_t client = clients[i];
+		client_t* client = &( clients[i] );
 
-		if( client.fd != UNUSED )
-		{
-			pthread_cancel( client.thread );
+		if ( client->thread != 0 )
+			pthread_cancel( client->thread );
+		
+		if( client->fd != UNUSED )
+			close( client->fd );
 
-			close( client.fd );
-			client_destroy( &client );
-		}
+		client_destroy( client );
 	}
 
+	shutdown( sock, 0 );
+	close( sock );
 	return EXIT_SUCCESS;
 }

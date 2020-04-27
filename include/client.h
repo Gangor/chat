@@ -4,7 +4,6 @@
 #include <server.h>
 #include <struct.h>
 
-#define BUFFER 256
 #define UNUSED -1
 
 void client_init( client_t* p, int fd );

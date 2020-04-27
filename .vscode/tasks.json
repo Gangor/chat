@@ -9,7 +9,8 @@
             },
             "args": [
                 "-pthread",
-                "-Iinclude",
+                "-I",
+                "include",
                 "-g",
                 "src/*.c",
                 "-o",
