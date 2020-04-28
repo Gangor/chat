@@ -14,7 +14,9 @@
                 "-g",
                 "src/*.c",
                 "-o",
-                "${workspaceRoot}/bin/${workspaceFolderBasename}"
+                "${workspaceRoot}/bin/${workspaceFolderBasename}",
+                "-D",
+                "RELEASE"
             ],
             "problemMatcher": [],
             "group": {

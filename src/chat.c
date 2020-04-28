@@ -42,6 +42,9 @@ int main(int argc, char *argv[])
 	signal( SIGINT, signal_callback_handler );
 	signal( SIGTERM, signal_callback_handler );
 
+	clientInit();
+	channelInit();
+
 	pthread_t mainThread;
 
 	pthread_create( &mainThread, NULL, mainProcess, NULL);
